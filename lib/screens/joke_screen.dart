@@ -1,44 +1,25 @@
 // lib/screens/joke_screen.dart
 
 import 'package:flutter/material.dart';
-import '../models/joke_model.dart';
-import '../services/api_service.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import '../bloc/joke_bloc.dart';
+import '../bloc/joke_event.dart';
+import '../bloc/joke_state.dart';
 
-class JokeScreen extends StatefulWidget {
+class JokeScreen extends StatelessWidget {
   const JokeScreen({super.key});
-
-  @override
-  State<JokeScreen> createState() => _JokeScreenState();
-}
-
-class _JokeScreenState extends State<JokeScreen> {
-  final ApiService _apiService = ApiService();
-  late Future<Joke> _jokeFuture;
-
-  @override
-  void initState() {
-    super.initState();
-    _loadJoke();
-  }
-
-  void _loadJoke() {
-    setState(() {
-      _jokeFuture = _apiService.fetchRandomJoke();
-    });
-  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Random Joke API'), centerTitle: true),
+      appBar: AppBar(title: const Text('BLoC Joke API'), centerTitle: true),
       body: Center(
         child: Padding(
           padding: const EdgeInsets.all(24.0),
-          child: FutureBuilder<Joke>(
-            future: _jokeFuture,
-            builder: (context, snapshot) {
-              // State 1: Loading
-              if (snapshot.connectionState == ConnectionState.waiting) {
+          // BlocBuilder automatically listens to JokeBloc states
+          child: BlocBuilder<JokeBloc, JokeState>(
+            builder: (context, state) {
+              if (state is JokeInitial || state is JokeLoading) {
                 return const Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
@@ -47,9 +28,7 @@ class _JokeScreenState extends State<JokeScreen> {
                     Text('Loading a funny joke...'),
                   ],
                 );
-              }
-              // State 2: Error
-              else if (snapshot.hasError) {
+              } else if (state is JokeError) {
                 return Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
@@ -60,26 +39,25 @@ class _JokeScreenState extends State<JokeScreen> {
                     ),
                     const SizedBox(height: 16),
                     Text(
-                      'Error: ${snapshot.error}',
+                      'Error: ${state.message}',
                       textAlign: TextAlign.center,
                       style: const TextStyle(color: Colors.red),
                     ),
                     const SizedBox(height: 16),
                     ElevatedButton(
-                      onPressed: _loadJoke,
+                      // Dispatch a new event to the BLoC to try again
+                      onPressed: () =>
+                          context.read<JokeBloc>().add(GetRandomJoke()),
                       child: const Text('Try Again'),
                     ),
                   ],
                 );
-              }
-              // State 3: Loaded
-              else if (snapshot.hasData) {
-                final joke = snapshot.data!;
+              } else if (state is JokeLoaded) {
                 return Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Text(
-                      joke.setup,
+                      state.joke.setup,
                       textAlign: TextAlign.center,
                       style: const TextStyle(
                         fontSize: 22,
@@ -88,7 +66,7 @@ class _JokeScreenState extends State<JokeScreen> {
                     ),
                     const SizedBox(height: 24),
                     Text(
-                      joke.punchline,
+                      state.joke.punchline,
                       textAlign: TextAlign.center,
                       style: const TextStyle(
                         fontSize: 20,
@@ -97,7 +75,9 @@ class _JokeScreenState extends State<JokeScreen> {
                     ),
                     const SizedBox(height: 48),
                     ElevatedButton.icon(
-                      onPressed: _loadJoke,
+                      // Dispatch a new event to the BLoC to fetch another joke
+                      onPressed: () =>
+                          context.read<JokeBloc>().add(GetRandomJoke()),
                       icon: const Icon(Icons.refresh),
                       label: const Text('Get Another Joke'),
                     ),
@@ -105,8 +85,7 @@ class _JokeScreenState extends State<JokeScreen> {
                 );
               }
 
-              // Fallback just in case
-              return const Text('No data available');
+              return const SizedBox.shrink();
             },
           ),
         ),

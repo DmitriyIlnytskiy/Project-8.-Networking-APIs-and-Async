@@ -44,5 +44,3 @@ app.*.map.json
 /android/app/profile
 /android/app/release
 
-# Ignore API keys and sensitive config files
-lib/config/api_key.dart
