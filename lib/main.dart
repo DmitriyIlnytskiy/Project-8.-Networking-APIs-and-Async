@@ -1,31 +1,46 @@
 // lib/main.dart
-
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'bloc/joke_bloc.dart';
-import 'bloc/joke_event.dart';
-import 'screens/joke_screen.dart';
-import 'services/api_service.dart';
+import 'features/joke/data/datasources/joke_local_data_source.dart';
+import 'features/joke/data/datasources/joke_remote_data_source.dart';
+import 'features/joke/data/datasources/repositories/joke_repository_impl.dart';
+import 'features/joke/domain/usecases/get_random_joke.dart';
+import 'features/joke/domain/usecases/manage_saved_jokes.dart';
+import 'features/joke/presentation/bloc/joke_bloc.dart';
+import 'features/joke/presentation/bloc/joke_event.dart';
+import 'features/joke/presentation/pages/home_page.dart';
 
 void main() {
-  runApp(const MyApp());
+  // Manual Dependency Injection
+  final remoteDataSource = JokeRemoteDataSource();
+  final localDataSource = JokeLocalDataSource();
+  final repository = JokeRepositoryImpl(
+    remoteDataSource: remoteDataSource,
+    localDataSource: localDataSource,
+  );
+
+  runApp(MyApp(repository: repository));
 }
 
 class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+  final JokeRepositoryImpl repository;
+
+  const MyApp({super.key, required this.repository});
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'API Practice App BLoC',
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
-        useMaterial3: true,
-      ),
-      // Provide the BLoC to the app and trigger the first fetch
-      home: BlocProvider(
-        create: (context) => JokeBloc(ApiService())..add(GetRandomJoke()),
-        child: const JokeScreen(),
+    // 1. We moved the BlocProvider UP to wrap the MaterialApp
+    return BlocProvider(
+      create: (_) => JokeBloc(
+        getRandomJoke: GetRandomJokeUseCase(repository),
+        manageSavedJokes: ManageSavedJokesUseCase(repository),
+      )..add(LoadRandomJokeEvent()),
+
+      // 2. Now the MaterialApp (and all its routes) is a child of the BLoC
+      child: MaterialApp(
+        title: 'Clean Architecture Jokes',
+        theme: ThemeData(primarySwatch: Colors.deepPurple, useMaterial3: true),
+        home: const HomePage(), // HomePage is now clean and simple
       ),
     );
   }
