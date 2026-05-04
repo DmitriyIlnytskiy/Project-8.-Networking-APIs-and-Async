@@ -1,4 +1,3 @@
-// lib/features/joke/presentation/bloc/joke_event.dart
 abstract class JokeEvent {}
 
 class LoadRandomJokeEvent extends JokeEvent {}

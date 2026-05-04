@@ -1,4 +1,3 @@
-// lib/features/joke/presentation/pages/saved_jokes_page.dart
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../bloc/joke_bloc.dart';

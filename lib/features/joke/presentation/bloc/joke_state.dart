@@ -1,4 +1,3 @@
-// lib/features/joke/presentation/bloc/joke_state.dart
 import '../../domain/entities/joke_entity.dart';
 
 abstract class JokeState {}

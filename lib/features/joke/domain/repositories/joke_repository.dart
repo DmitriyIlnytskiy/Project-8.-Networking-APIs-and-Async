@@ -1,4 +1,3 @@
-// lib/features/joke/domain/repositories/joke_repository.dart
 import '../entities/joke_entity.dart';
 
 /// Abstract contract that the Data layer must fulfill.

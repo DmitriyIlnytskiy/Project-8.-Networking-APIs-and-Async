@@ -1,4 +1,3 @@
-// lib/features/joke/data/models/joke_model.dart
 import '../../domain/entities/joke_entity.dart';
 
 /// Extends the entity to add JSON serialization (data layer responsibility)
